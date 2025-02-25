@@ -40,10 +40,6 @@ export class InputHistory {
 
     const end = performance.now();
     console.debug(`Loading input history took ${end - parsing}ms. Records: ${this.records.length}.`);
-
-    store.watch(records => {
-      this.records = records;
-    });
   }
 
   /**

@@ -67,7 +67,7 @@ export class DebouncedCache<Args extends unknown[], R> {
     const abortController = new AbortController();
 
     const afterTimeout = () => {
-      const promise = this.func.call(null, ...(args as unknown as Args), abortController.signal);
+      const promise = this.func.call(null, ...args, abortController.signal);
 
       // We don't remove an entry from the cache if the promise is rejected.
       // We expect that the underlying function will handle the errors and

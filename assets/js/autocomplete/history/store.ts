@@ -53,12 +53,6 @@ export class HistoryStore {
     console.debug(`Writing ${records.length} history records to the localStorage took ${end - start}ms.`);
   }
 
-  watch(callback: (value: string[]) => void): void {
-    store.watch<History>(this.key, history => {
-      callback(this.extractRecords(history));
-    });
-  }
-
   /**
    * Extracts the records from the history. To do this, we first need to migrate
    * the history object to the latest schema version if necessary.
