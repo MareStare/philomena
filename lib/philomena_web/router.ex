@@ -1,4 +1,5 @@
 defmodule PhilomenaWeb.Router do
+  alias IEx.Autocomplete
   use PhilomenaWeb, :router
 
   import PhilomenaWeb.UserAuth

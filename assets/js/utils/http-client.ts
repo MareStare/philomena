@@ -23,14 +23,6 @@ export class HttpClient {
    * Issues a request, expecting a JSON response.
    */
   async fetchJson<T>(path: string, params: RequestParams): Promise<T> {
-    if (params.headers?.Accept) {
-      throw new Error('Manually defined "Accept" header is not allowed in "fetchJson"');
-    }
-
-    // TODO: figure out how to enable `Accept: application/json` plug in
-    // the routes on backend.
-    // (params.headers ??= {}).Accept = 'application/json';
-
     const response = await this.fetch(path, params);
     return response.json();
   }
@@ -55,9 +47,6 @@ export class HttpClient {
         params.headers!['X-Request-Id'] = generateId('req-');
         params.headers!['X-Retry-Attempt'] = String(attempt);
 
-        // TODO: we should respect the `Retry-After` header from the response,
-        // to allow for granular rerty control from the backend side.
-        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
         const response = await fetch(url, params);
 
         if (!response.ok) {
