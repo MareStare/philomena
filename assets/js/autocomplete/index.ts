@@ -333,7 +333,10 @@ class Autocomplete {
  * if it's disabled.
  */
 function refreshNativeAutocomplete() {
-  const elements = $$<TextInputElement>(':is(input, textarea)[data-autocomplete][data-autocomplete-condition]');
+  const elements = $$<TextInputElement>(
+    'input[data-autocomplete][data-autocomplete-condition], ' +
+      'textarea[data-autocomplete][data-autocomplete-condition]',
+  );
 
   for (const element of elements) {
     const input = AutocompletableInput.fromElement(element);
