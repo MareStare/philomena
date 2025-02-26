@@ -45,28 +45,32 @@ export class TagSuggestion {
 
     const label = aliasName ? `${aliasName} → ${canonicalName}` : canonicalName;
 
-    const prefix = makeEl('div');
-
-    prefix.append(
-      makeEl('i', {
-        className: 'fa-solid fa-tag',
-      }),
-      makeEl('span', {
-        textContent: ` ${label.slice(0, this.matchLength)}`,
-        className: 'autocomplete-item-tag__match',
-      }),
-      makeEl('span', {
-        textContent: label.slice(this.matchLength),
-      }),
-    );
-
     return [
-      prefix,
+      makeEl('div', { className: 'autocomplete__item__content' }, [
+        makeEl('i', { className: 'fa-solid fa-tag' }),
+        makeEl('b', {
+          className: 'autocomplete__item__tag__match',
+          textContent: ` ${label.slice(0, this.matchLength)}`,
+        }),
+        makeEl('span', {
+          textContent: label.slice(this.matchLength),
+        }),
+      ]),
       makeEl('span', {
-        className: 'autocomplete-item-tag__count',
-        textContent: ` ${imageCount}`,
+        className: 'autocomplete__item__tag__count',
+        textContent: `  ${TagSuggestion.formatImageCount(imageCount)}`,
       }),
     ];
+  }
+
+  static formatImageCount(count: number): string {
+    const chars = [...count.toString()];
+
+    for (let i = chars.length - 3; i >= 0; i -= 3) {
+      chars.splice(i, 0, ' ');
+    }
+
+    return chars.join('');
   }
 }
 
@@ -92,16 +96,19 @@ export class HistorySuggestion {
 
   render(): HTMLElement[] {
     return [
-      makeEl('i', {
-        className: 'autocomplete-item-history__icon fa-solid fa-history',
-      }),
-      makeEl('span', {
-        textContent: ` ${this.content.slice(0, this.matchLength)}`,
-        className: 'autocomplete-item-history__match',
-      }),
-      makeEl('span', {
-        textContent: this.content.slice(this.matchLength),
-      }),
+      makeEl('div', { className: 'autocomplete__item__content' }, [
+        makeEl('i', {
+          className: 'autocomplete__item__history__icon fa-solid fa-history',
+        }),
+        makeEl('b', {
+          textContent: ` ${this.content.slice(0, this.matchLength)}`,
+          className: 'autocomplete__item__history__match',
+        }),
+        makeEl('span', {
+          textContent: this.content.slice(this.matchLength),
+        }),
+      ]),
+      // Here will be a `delete` button to remove the item from the history.
     ];
   }
 }
@@ -215,7 +222,7 @@ export class SuggestionsPopup {
     const type = suggestion instanceof TagSuggestion ? 'tag' : 'history';
 
     const element = makeEl('div', {
-      className: `autocomplete__item autocomplete-item-${type}`,
+      className: `autocomplete__item autocomplete__item__${type}`,
     });
     element.append(...suggestion.render());
 
