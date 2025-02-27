@@ -83,9 +83,7 @@ export async function retry<R>(func: (attempt: number) => Promise<R>, params?: R
       attempt += 1;
 
       if (attempt > maxAttempts) {
-        throw new Error(`All ${maxAttempts} attempts of running ${label} failed`, {
-          cause: error,
-        });
+        throw new Error(`All ${maxAttempts} attempts of running ${label} failed: ${error}`);
       }
 
       console.warn(

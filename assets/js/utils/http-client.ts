@@ -50,7 +50,7 @@ export class HttpClient {
         const response = await fetch(url, params);
 
         if (!response.ok) {
-          throw new Error('Received error from server', { cause: response });
+          throw new Error(`Received error from server (${response.status}: ${response.statusText})`);
         }
 
         return response;
