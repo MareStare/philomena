@@ -221,10 +221,13 @@ export class SuggestionsPopup {
   appendSuggestion(suggestion: Suggestion) {
     const type = suggestion instanceof TagSuggestion ? 'tag' : 'history';
 
-    const element = makeEl('div', {
-      className: `autocomplete__item autocomplete__item__${type}`,
-    });
-    element.append(...suggestion.render());
+    const element = makeEl(
+      'div',
+      {
+        className: `autocomplete__item autocomplete__item__${type}`,
+      },
+      suggestion.render(),
+    );
 
     const item: SuggestionItem = { element, suggestion };
 
@@ -235,15 +238,8 @@ export class SuggestionsPopup {
   }
 
   private watchItem(item: SuggestionItem) {
-    item.element.addEventListener('pointerdown', event => {
-      if (event.button !== 0) {
-        return;
-      }
-
-      // This prevent focusing on the element and thus losing focus on the input field.
-      // This ensures that the user can always continue typing in the input, and we
-      // don't need to refocus the input back if the user clicks on the suggestion.
-      event.preventDefault();
+    item.element.addEventListener('click', event => {
+      console.log('item_selected');
 
       const detail: ItemSelectedEvent = {
         suggestion: item.suggestion,

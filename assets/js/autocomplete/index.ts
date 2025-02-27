@@ -175,7 +175,7 @@ class Autocomplete {
     this.popup.setSuggestions(suggestions).showForElement(this.input.element);
   }
 
-  onFocusIn(event?: FocusEvent) {
+  onFocusIn(event: FocusEvent) {
     console.debug('focusin', event);
     if (this.popup.isHidden) {
       // The event we are processing comes before the input's selection is settled.
@@ -197,10 +197,11 @@ class Autocomplete {
   }
 
   onKeyDown(event: KeyboardEvent) {
+    console.log(`keydown! key: '${event.key}', code: '${event.code}', keyCode: ${event.keyCode}`);
+
     if (!this.isActive() || this.input.element !== event.target) {
       return;
     }
-
     if ((event.key === ',' || event.code === 'Enter') && this.input.type === 'single-tag') {
       // Coma means the end of input for the current tag in single-tag mode.
       this.popup.hide();
@@ -273,6 +274,8 @@ class Autocomplete {
   }
 
   confirmSuggestion({ suggestion, shiftKey, ctrlKey }: ItemSelectedEvent) {
+    console.log('confirmSuggestion', suggestion);
+
     this.assertActive();
 
     this.updateInputWithSelectedValue(suggestion);
@@ -286,9 +289,18 @@ class Autocomplete {
     this.input.element.dispatchEvent(newEvent);
 
     if (ctrlKey || (suggestion instanceof HistorySuggestion && !shiftKey)) {
-      this.input.element.form?.submit();
+      // We use `requestSubmit()` instead of `submit()` because it triggers the
+      // 'submit' event on the form. We have a handler subscribed to that event
+      // that records the input's value for history tracking.
+      this.input.element.form?.requestSubmit();
     }
 
+    // XXX: it's important to focus the input element first before hiding the popup,
+    // because if we do it the other way around our `onFocusIn` handler will refresh
+    // the popup and bring it back up, which is not what we want. We want to give a
+    // brief moment of silence for the user without the popup before they type
+    // something else, otherwise we'd show some more completions for the current term.
+    this.input.element.focus();
     this.popup.hide();
   }
 
