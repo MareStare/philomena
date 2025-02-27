@@ -24,6 +24,7 @@ header.header
         placeholder="Search"
         autocapitalize="none"
         autocomplete=if(@conn.cookies["enable_search_ac"], do: "on", else: "off")
+        inputmode="search"
         data-autocomplete="multi-tags"
         data-autocomplete-condition="enable_search_ac"
         data-autocomplete-history-id="search-history"

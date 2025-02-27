@@ -7,6 +7,7 @@ h1 Search
     name: "q",
     value: @conn.params["q"],
     autocomplete: if(@conn.cookies["enable_search_ac"], do: "on", else: "off"),
+    inputmode: "search",
     data: [ \
       autocomplete: "multi-tags",
       autocomplete_condition: "enable_search_ac",
