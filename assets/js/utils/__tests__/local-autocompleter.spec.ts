@@ -48,7 +48,11 @@ describe('Local Autocompleter', () => {
 
     function expectLocalAutocomplete(term: string, topK = 5) {
       const localAutocomplete = new LocalAutocompleter(mockData);
-      const actual = localAutocomplete.matchPrefix(term, topK);
+      const results = localAutocomplete.matchPrefix(term, topK);
+      const actual = results.map(result => {
+        const canonical = `${result.canonical} (${result.images})`;
+        return result.alias ? `${result.alias} -> ${canonical}` : canonical;
+      });
 
       return expect(actual);
     }
@@ -60,10 +64,7 @@ describe('Local Autocompleter', () => {
     it('should return suggestions for exact tag name match', () => {
       expectLocalAutocomplete('safe').toMatchInlineSnapshot(`
         [
-          {
-            "canonical": "safe",
-            "images": 6,
-          },
+          "safe (6)",
         ]
       `);
     });
@@ -71,22 +72,15 @@ describe('Local Autocompleter', () => {
     it('should return suggestion for an alias', () => {
       expectLocalAutocomplete('flowers').toMatchInlineSnapshot(`
         [
-          {
-            "alias": "flowers",
-            "canonical": "flower",
-            "images": 1,
-          },
+          "flowers -> flower (1)",
         ]
       `);
     });
 
-    it('should prefer canonical tag over alias when both match', () => {
+    it('should prefer canonical tag over an alias when both match', () => {
       expectLocalAutocomplete('flo').toMatchInlineSnapshot(`
         [
-          {
-            "canonical": "flower",
-            "images": 1,
-          },
+          "flower (1)",
         ]
       `);
     });
@@ -94,18 +88,9 @@ describe('Local Autocompleter', () => {
     it('should return suggestions sorted by image count', () => {
       expectLocalAutocomplete(termStem).toMatchInlineSnapshot(`
         [
-          {
-            "canonical": "forest",
-            "images": 3,
-          },
-          {
-            "canonical": "fog",
-            "images": 1,
-          },
-          {
-            "canonical": "force field",
-            "images": 1,
-          },
+          "forest (3)",
+          "fog (1)",
+          "force field (1)",
         ]
       `);
     });
@@ -113,10 +98,7 @@ describe('Local Autocompleter', () => {
     it('should return namespaced suggestions without including namespace', () => {
       expectLocalAutocomplete('test').toMatchInlineSnapshot(`
         [
-          {
-            "canonical": "artist:test",
-            "images": 1,
-          },
+          "artist:test (1)",
         ]
       `);
     });
@@ -124,10 +106,7 @@ describe('Local Autocompleter', () => {
     it('should return only the required number of suggestions', () => {
       expectLocalAutocomplete(termStem, 1).toMatchInlineSnapshot(`
         [
-          {
-            "canonical": "forest",
-            "images": 3,
-          },
+          "forest (3)",
         ]
       `);
     });
