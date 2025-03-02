@@ -3,7 +3,7 @@ import { promises } from 'fs';
 import { join } from 'path';
 import { TextDecoder } from 'util';
 
-describe('Local Autocompleter', () => {
+describe('LocalAutocompleter', () => {
   let mockData: ArrayBuffer;
 
   beforeAll(async () => {
@@ -43,7 +43,7 @@ describe('Local Autocompleter', () => {
     });
   });
 
-  describe('topK', () => {
+  describe('matchPrefix', () => {
     const termStem = ['f', 'o'].join('');
 
     function expectLocalAutocomplete(term: string, topK = 5) {
