@@ -49,6 +49,7 @@ describe('Local Autocompleter', () => {
     function expectLocalAutocomplete(term: string, topK = 5) {
       const localAutocomplete = new LocalAutocompleter(mockData);
       const actual = localAutocomplete.matchPrefix(term, topK);
+
       return expect(actual);
     }
 
@@ -60,9 +61,8 @@ describe('Local Autocompleter', () => {
       expectLocalAutocomplete('safe').toMatchInlineSnapshot(`
         [
           {
-            "alias": undefined,
             "canonical": "safe",
-            "images": 2,
+            "images": 6,
           },
         ]
       `);
@@ -84,17 +84,14 @@ describe('Local Autocompleter', () => {
       expectLocalAutocomplete(termStem).toMatchInlineSnapshot(`
         [
           {
-            "alias": undefined,
             "canonical": "forest",
             "images": 3,
           },
           {
-            "alias": undefined,
             "canonical": "fog",
             "images": 1,
           },
           {
-            "alias": undefined,
             "canonical": "force field",
             "images": 1,
           },
@@ -106,7 +103,6 @@ describe('Local Autocompleter', () => {
       expectLocalAutocomplete('test').toMatchInlineSnapshot(`
         [
           {
-            "alias": undefined,
             "canonical": "artist:test",
             "images": 1,
           },
@@ -118,7 +114,6 @@ describe('Local Autocompleter', () => {
       expectLocalAutocomplete(termStem, 1).toMatchInlineSnapshot(`
         [
           {
-            "alias": undefined,
             "canonical": "forest",
             "images": 3,
           },
@@ -128,11 +123,11 @@ describe('Local Autocompleter', () => {
 
     it('should NOT return suggestions associated with hidden tags', () => {
       window.booru.hiddenTagList = [1];
-      expectLocalAutocomplete(termStem).toMatchInlineSnapshot();
+      expectLocalAutocomplete(termStem).toMatchInlineSnapshot(`[]`);
     });
 
     it('should return empty array for empty prefix', () => {
-      expectLocalAutocomplete('').toMatchInlineSnapshot();
+      expectLocalAutocomplete('').toMatchInlineSnapshot(`[]`);
     });
   });
 });

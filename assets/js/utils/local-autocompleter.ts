@@ -256,11 +256,16 @@ export class LocalAutocompleter {
     return results.topK(k).map((i: TagReferenceIndex) => {
       const alias = this.decoder.decode(this.referenceToName(i, false));
       const canonical = this.decoder.decode(this.referenceToName(i));
-      return {
-        alias: alias === canonical ? undefined : alias,
+      const result: Result = {
         canonical,
         images: this.getImageCount(i),
       };
+
+      if (alias !== canonical) {
+        result.alias = alias;
+      }
+
+      return result;
     });
   }
 }
