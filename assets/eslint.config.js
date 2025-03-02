@@ -285,6 +285,12 @@ export default tsEslint.config(
       'no-unused-expressions': 0,
       'vitest/valid-expect': 0,
       '@typescript-eslint/no-unused-expressions': 0,
+      'vitest/expect-expect': [
+        'error',
+        {
+          assertFunctionNames: ['expect*'],
+        },
+      ],
     },
   },
 );

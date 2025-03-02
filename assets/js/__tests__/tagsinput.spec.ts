@@ -1,6 +1,5 @@
 import { $, $$, hideEl } from '../utils/dom';
 import { assertNotNull } from '../utils/assert';
-import { Suggestion } from '../utils/suggestions';
 import { setupTagsInput, addTag, reloadTagsInput } from '../tagsinput';
 
 const formData = `<form class="tags-form">
