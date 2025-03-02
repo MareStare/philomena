@@ -60,8 +60,8 @@ export class HttpClient {
   }
 }
 
-function isRetryable(error: unknown): boolean {
-  return !(error instanceof Error && error.name === 'AbortError');
+function isRetryable(error: Error): boolean {
+  return error.name !== 'AbortError';
 }
 
 /**

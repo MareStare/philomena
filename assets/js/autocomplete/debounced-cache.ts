@@ -38,7 +38,7 @@ export class DebouncedCache<Args extends unknown[], R> {
    * that it can use to abort the operation when a new call is scheduled while
    * it's executing.
    */
-  constructor(func: (...args: [...Args, abortSignal: AbortSignal]) => Promise<R>, params?: DebouncedCacheParams) {
+  constructor(func: (...args: [...Args, AbortSignal]) => Promise<R>, params?: DebouncedCacheParams) {
     this.thresholdMs = params?.thresholdMs ?? 300;
     this.func = func;
   }
@@ -54,13 +54,13 @@ export class DebouncedCache<Args extends unknown[], R> {
 
     // There is no native support for destructuring after an ellipsis, so we have
     // to do some type casting work here.
-    const callback = params.pop() as (result: R) => void;
+    const onResult = params.pop() as (result: R) => void;
     const args = params as unknown as Args;
 
     const key = JSON.stringify(args);
 
     if (this.cache.has(key)) {
-      this.onFulfilled(this.cache.get(key)!, callback);
+      this.onFulfilled(this.cache.get(key)!, onResult);
       return;
     }
 
@@ -71,10 +71,10 @@ export class DebouncedCache<Args extends unknown[], R> {
 
       // We don't remove an entry from the cache if the promise is rejected.
       // We expect that the underlying function will handle the errors and
-      // do the retries if necessary.
+      // do the retries internally if necessary.
       this.cache.set(key, promise);
 
-      this.onFulfilled(promise, callback);
+      this.onFulfilled(promise, onResult);
     };
 
     this.lastSchedule = {
