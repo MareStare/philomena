@@ -17,7 +17,7 @@ describe('retry', () => {
   // Remove randomness and real delays from the tests.
   const real = {
     random: Math.random,
-    setTimeout: globalThis.setTimeout,
+    setTimeout,
   };
 
   beforeEach(() => {

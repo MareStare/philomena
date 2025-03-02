@@ -6,6 +6,15 @@ interface RequestParams extends RequestInit {
   headers?: Record<string, string>;
 }
 
+export class HttpError extends Error {
+  response: Response;
+
+  constructor(request: Request, response: Response) {
+    super(`${request.method} ${request.url} request failed (${response.status}: ${response.statusText})`);
+    this.response = response;
+  }
+}
+
 /**
  * Generic HTTP Client with some batteries included:
  *
@@ -47,10 +56,12 @@ export class HttpClient {
         params.headers!['X-Request-Id'] = generateId('req-');
         params.headers!['X-Retry-Attempt'] = String(attempt);
 
-        const response = await fetch(url, params);
+        const request = new Request(url, params);
+
+        const response = await fetch(request);
 
         if (!response.ok) {
-          throw new Error(`Received error from server (${response.status}: ${response.statusText})`);
+          throw new HttpError(request, response);
         }
 
         return response;
@@ -61,7 +72,7 @@ export class HttpClient {
 }
 
 function isRetryable(error: Error): boolean {
-  return error.name !== 'AbortError';
+  return error.name !== 'AbortError' || (error instanceof HttpError && error.response.status >= 500);
 }
 
 /**
