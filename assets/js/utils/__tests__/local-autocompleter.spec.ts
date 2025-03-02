@@ -68,11 +68,22 @@ describe('Local Autocompleter', () => {
       `);
     });
 
-    it('should return suggestion for original tag when passed an alias', () => {
+    it('should return suggestion for an alias', () => {
       expectLocalAutocomplete('flowers').toMatchInlineSnapshot(`
         [
           {
             "alias": "flowers",
+            "canonical": "flower",
+            "images": 1,
+          },
+        ]
+      `);
+    });
+
+    it('should prefer canonical tag over alias when both match', () => {
+      expectLocalAutocomplete('flo').toMatchInlineSnapshot(`
+        [
+          {
             "canonical": "flower",
             "images": 1,
           },
