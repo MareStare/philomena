@@ -207,7 +207,7 @@ export class SuggestionsPopup {
       this.appendSuggestion(suggestion);
     }
 
-    if (params.tags.length > 0) {
+    if (params.tags.length > 0 && params.history.length > 0) {
       this.container.appendChild(makeEl('hr', { className: 'autocomplete__separator' }));
     }
 

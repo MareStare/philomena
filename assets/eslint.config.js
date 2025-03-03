@@ -265,6 +265,7 @@ export default tsEslint.config(
       'no-unused-vars': 'off',
       'no-redeclare': 'off',
       'no-shadow': 'off',
+      'no-extra-parens': 'off',
       '@typescript-eslint/no-unused-vars': [
         2,
         { vars: 'all', args: 'after-used', varsIgnorePattern: '^_.*', argsIgnorePattern: '^_.*' },
@@ -288,7 +289,7 @@ export default tsEslint.config(
       'vitest/expect-expect': [
         'error',
         {
-          assertFunctionNames: ['expect*'],
+          assertFunctionNames: ['expect*', '*.expect*'],
         },
       ],
     },

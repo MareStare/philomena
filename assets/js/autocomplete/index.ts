@@ -134,7 +134,7 @@ class Autocomplete {
       suggestions.tags = [];
     }
 
-    // Show suggestions that we arledy have early without waiting for a potential
+    // Show suggestions that we already have early without waiting for a potential
     // server-side suggestions request.
     this.showSuggestions(suggestions);
 
@@ -177,11 +177,14 @@ class Autocomplete {
 
   onFocusIn(event: FocusEvent) {
     console.debug('focusin', event);
-    if (this.popup.isHidden) {
-      // The event we are processing comes before the input's selection is settled.
-      // Defer the refresh to the next frame to get the updated selection.
-      requestAnimationFrame(() => this.refresh());
-    }
+
+    // The event we are processing comes before the input's selection is settled.
+    // Defer the refresh to the next frame to get the updated selection.
+    requestAnimationFrame(() => {
+      if (this.popup.isHidden) {
+        this.refresh();
+      }
+    });
   }
 
   onClick(event: MouseEvent) {

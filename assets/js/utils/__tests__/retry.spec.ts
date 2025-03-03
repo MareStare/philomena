@@ -1,10 +1,14 @@
+import { mockDateNow, mockRandom } from '../../../test/mock';
 import { retry, RetryFunc, RetryParams } from '../retry';
 
 describe('retry', () => {
   async function expectRetry<R>(params: RetryParams, func?: RetryFunc<R>) {
     const spy = vi.fn(func ?? (() => Promise.reject(new Error('always failing'))));
 
-    const result = await retry(spy, params).catch(err => `throw ${err}`);
+    const promise = retry(spy, params).catch(err => `throw ${err}`);
+
+    await vi.runAllTimersAsync();
+    const result = await promise;
 
     const retries = spy.mock.calls.map(([attempt, nextDelayMs]) => {
       const suffix = nextDelayMs === undefined ? '' : 'ms';
@@ -15,20 +19,8 @@ describe('retry', () => {
   }
 
   // Remove randomness and real delays from the tests.
-  const real = {
-    random: Math.random,
-    setTimeout,
-  };
-
-  beforeEach(() => {
-    Math.random = () => 0.5;
-    globalThis.setTimeout = ((func: () => void) => func()) as typeof globalThis.setTimeout;
-  });
-
-  afterEach(() => {
-    Math.random = real.random;
-    globalThis.setTimeout = real.setTimeout;
-  });
+  mockRandom();
+  mockDateNow(0);
 
   describe('stops on a successful attempt', () => {
     it('first attempt', async () => {
