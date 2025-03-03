@@ -11,7 +11,7 @@ import {
 } from '../utils/suggestions';
 import { $$ } from '../utils/dom';
 import { AutocompleteClient, GetTagSuggestionsRequest } from './client';
-import { DebouncedCache } from './debounced-cache';
+import { DebouncedCache } from '../utils/debounced-cache';
 import store from '../utils/store';
 
 // eslint-disable-next-line no-use-before-define
