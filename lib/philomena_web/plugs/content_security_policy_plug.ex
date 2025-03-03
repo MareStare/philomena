@@ -90,7 +90,6 @@ defmodule PhilomenaWeb.ContentSecurityPolicyPlug do
     else
       "'self'"
     end
-
   end
 
   defp default_style_src, do: vite_hmr?(do: "'self' 'unsafe-inline'", else: "'self'")
