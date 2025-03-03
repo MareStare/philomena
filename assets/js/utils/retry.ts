@@ -70,7 +70,7 @@ export async function retry<R>(func: RetryFunc<R>, params?: RetryParams): Promis
   let nextDelayMs = minDelayMs;
 
   while (true) {
-    const hasNextAttempts = attempt <= maxAttempts;
+    const hasNextAttempts = attempt < maxAttempts;
 
     try {
       // XXX: an `await` is important in this block to make sure the exception is caught
@@ -79,12 +79,13 @@ export async function retry<R>(func: RetryFunc<R>, params?: RetryParams): Promis
       const result = await func(attempt, hasNextAttempts ? nextDelayMs : undefined);
       return result;
     } catch (error) {
-      if (error instanceof Error && params?.isRetryable && !params.isRetryable(error)) {
+      if (!(error instanceof Error) || (params?.isRetryable && !params.isRetryable(error))) {
         throw error;
       }
 
       if (!hasNextAttempts) {
-        throw new Error(`All ${maxAttempts} attempts of running ${label} failed: ${error}`);
+        console.error(`All ${maxAttempts} attempts of running ${label} failed`, error);
+        throw error;
       }
 
       console.warn(

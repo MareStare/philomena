@@ -2,10 +2,14 @@ import { mockDateNow, mockRandom } from '../../../test/mock';
 import { retry, RetryFunc, RetryParams } from '../retry';
 
 describe('retry', () => {
-  async function expectRetry<R>(params: RetryParams, func?: RetryFunc<R>) {
-    const spy = vi.fn(func ?? (() => Promise.reject(new Error('always failing'))));
+  async function expectRetry<R>(params: RetryParams, maybeFunc?: RetryFunc<R>) {
+    const func = maybeFunc ?? (() => Promise.reject(new Error('always failing')));
+    const spy = vi.fn(func);
 
-    const promise = retry(spy, params).catch(err => `throw ${err}`);
+    // Preserve the empty name of the anonymous functions. Spy wrapper overrides it.
+    const funcParam = func.name === '' ? (...args: Parameters<RetryFunc<R>>) => spy(...args) : spy;
+
+    const promise = retry(funcParam, params).catch(err => `throw ${err}`);
 
     await vi.runAllTimersAsync();
     const result = await promise;
@@ -21,6 +25,12 @@ describe('retry', () => {
   // Remove randomness and real delays from the tests.
   mockRandom();
   mockDateNow(0);
+
+  const consoleErrorSpy = vi.spyOn(console, 'error');
+
+  afterEach(() => {
+    consoleErrorSpy.mockClear();
+  });
 
   describe('stops on a successful attempt', () => {
     it('first attempt', async () => {
@@ -43,7 +53,7 @@ describe('retry', () => {
         [
           "1: 200ms",
           "2: 300ms",
-          "3: 600ms",
+          "3: undefined",
           "ok",
         ]
       `);
@@ -60,9 +70,8 @@ describe('retry', () => {
         [
           "1: 200ms",
           "2: 300ms",
-          "3: 600ms",
-          "4: undefined",
-          "ok",
+          "3: undefined",
+          "throw Error: last failure",
         ]
       `);
     });
@@ -73,9 +82,8 @@ describe('retry', () => {
       [
         "1: 200ms",
         "2: 300ms",
-        "3: 600ms",
-        "4: undefined",
-        "throw Error: All 3 attempts of running spy failed: Error: always failing",
+        "3: undefined",
+        "throw Error: always failing",
       ]
     `);
 
@@ -85,9 +93,8 @@ describe('retry', () => {
         "2: 300ms",
         "3: 600ms",
         "4: 1125ms",
-        "5: 1125ms",
-        "6: undefined",
-        "throw Error: All 5 attempts of running spy failed: Error: always failing",
+        "5: undefined",
+        "throw Error: always failing",
       ]
     `);
   });
@@ -97,9 +104,8 @@ describe('retry', () => {
       [
         "1: 200ms",
         "2: 200ms",
-        "3: 200ms",
-        "4: undefined",
-        "throw Error: All 3 attempts of running spy failed: Error: always failing",
+        "3: undefined",
+        "throw Error: always failing",
       ]
     `);
   });
@@ -109,9 +115,8 @@ describe('retry', () => {
       [
         "1: 0ms",
         "2: 0ms",
-        "3: 0ms",
-        "4: undefined",
-        "throw Error: All 3 attempts of running spy failed: Error: always failing",
+        "3: undefined",
+        "throw Error: always failing",
       ]
     `);
   });
@@ -141,7 +146,7 @@ describe('retry', () => {
         [
           "1: 200ms",
           "2: 300ms",
-          "3: 600ms",
+          "3: undefined",
           "throw Error: non-retryable",
         ]
       `);
@@ -162,6 +167,50 @@ describe('retry', () => {
     (await expectRetry({ maxDelayMs: 100 })).toMatchInlineSnapshot(`
       [
         "throw Error: Invalid 'maxDelayMs' for retry: 100, 'minDelayMs' is 200",
+      ]
+    `);
+  });
+
+  it('should use the provided label in logs', async () => {
+    (await expectRetry({ label: 'test-routine' })).toMatchInlineSnapshot(`
+      [
+        "1: 200ms",
+        "2: 300ms",
+        "3: undefined",
+        "throw Error: always failing",
+      ]
+    `);
+
+    expect(consoleErrorSpy.mock.calls).toMatchInlineSnapshot(`
+      [
+        [
+          "All 3 attempts of running test-routine failed",
+          [Error: always failing],
+        ],
+      ]
+    `);
+  });
+
+  it('should use the function name in logs', async () => {
+    async function testFunc() {
+      throw new Error('always failing');
+    }
+
+    (await expectRetry({}, testFunc)).toMatchInlineSnapshot(`
+      [
+        "1: 200ms",
+        "2: 300ms",
+        "3: undefined",
+        "throw Error: always failing",
+      ]
+    `);
+
+    expect(consoleErrorSpy.mock.calls).toMatchInlineSnapshot(`
+      [
+        [
+          "All 3 attempts of running testFunc failed",
+          [Error: always failing],
+        ],
       ]
     `);
   });

@@ -21,7 +21,7 @@ export class HttpError extends Error {
  * - Handles rendering of the URL with query parameters
  * - Throws an error on non-OK responses
  * - Automatically retries failed requests
- * - Embeds a `X-Request-Id` and `X-Retry-Attempt` in the headers.
+ * - Add some useful meta headers
  * - ...Some other method-specific goodies
  */
 export class HttpClient {
@@ -31,12 +31,12 @@ export class HttpClient {
   /**
    * Issues a request, expecting a JSON response.
    */
-  async fetchJson<T>(path: string, params: RequestParams): Promise<T> {
+  async fetchJson<T>(path: string, params?: RequestParams): Promise<T> {
     const response = await this.fetch(path, params);
     return response.json();
   }
 
-  async fetch(path: string, params: RequestParams): Promise<Response> {
+  async fetch(path: string, params: RequestParams = {}): Promise<Response> {
     const url = new URL(path, window.location.origin);
 
     for (const [key, value] of Object.entries(params.query ?? {})) {
@@ -72,7 +72,7 @@ export class HttpClient {
 }
 
 function isRetryable(error: Error): boolean {
-  return error.name !== 'AbortError' || (error instanceof HttpError && error.response.status >= 500);
+  return error instanceof HttpError && error.response.status >= 500;
 }
 
 /**

@@ -132,6 +132,17 @@ describe('Suggestions', () => {
       expect(document.querySelector('.autocomplete__item__tag:last-child')).toHaveClass(selectedItemClassName);
     });
 
+    it('should do nothing on selection changes when empty', () => {
+      [popup, input] = mockBaseSuggestionsPopup();
+
+      popup.selectDown();
+      popup.selectUp();
+      popup.selectCtrlDown();
+      popup.selectCtrlUp();
+
+      expect(document.querySelector(`.${selectedItemClassName}`)).toBeNull();
+    });
+
     it('should loop around when selecting next on last and previous on first', () => {
       [popup, input] = mockBaseSuggestionsPopup(true);
 
@@ -189,28 +200,82 @@ describe('Suggestions', () => {
     });
   });
 
+  describe('HistorySuggestion', () => {
+    it('should render the suggestion', () => {
+      expectHistoryRender('foo bar').toMatchInlineSnapshot(`
+        {
+          "label": " foo bar",
+          "value": "foo bar",
+        }
+      `);
+    });
+  });
+
   describe('TagSuggestion', () => {
     it('should format suggested tags as tag name and the count', () => {
-      expectTagRender({ canonical: 'safe', images: 10 }).toMatchInlineSnapshot(`" safe  10"`);
-      expectTagRender({ canonical: 'safe', images: 10_000 }).toMatchInlineSnapshot(`" safe  10 000"`);
-      expectTagRender({ canonical: 'safe', images: 100_000 }).toMatchInlineSnapshot(`" safe  100 000"`);
-      expectTagRender({ canonical: 'safe', images: 1000_000 }).toMatchInlineSnapshot(`" safe  1 000 000"`);
-      expectTagRender({ canonical: 'safe', images: 10_000_000 }).toMatchInlineSnapshot(`" safe  10 000 000"`);
+      expectTagRender({ canonical: 'safe', images: 10 }).toMatchInlineSnapshot(`
+        {
+          "label": " safe  10",
+          "value": "safe",
+        }
+      `);
+      expectTagRender({ canonical: 'safe', images: 10_000 }).toMatchInlineSnapshot(`
+        {
+          "label": " safe  10 000",
+          "value": "safe",
+        }
+      `);
+      expectTagRender({ canonical: 'safe', images: 100_000 }).toMatchInlineSnapshot(`
+        {
+          "label": " safe  100 000",
+          "value": "safe",
+        }
+      `);
+      expectTagRender({ canonical: 'safe', images: 1000_000 }).toMatchInlineSnapshot(`
+        {
+          "label": " safe  1 000 000",
+          "value": "safe",
+        }
+      `);
+      expectTagRender({ canonical: 'safe', images: 10_000_000 }).toMatchInlineSnapshot(`
+        {
+          "label": " safe  10 000 000",
+          "value": "safe",
+        }
+      `);
     });
 
     it('should display alias -> canonical for aliased tags', () => {
       expectTagRender({ images: 10, canonical: 'safe', alias: 'rating:safe' }).toMatchInlineSnapshot(
-        `" rating:safe → safe  10"`,
+        `
+        {
+          "label": " rating:safe → safe  10",
+          "value": "safe",
+        }
+      `,
       );
     });
   });
 });
 
+function expectHistoryRender(content: string) {
+  const suggestion = new HistorySuggestion(content, 0);
+  const label = suggestion
+    .render()
+    .map(el => el.textContent)
+    .join('');
+  const value = suggestion.value();
+
+  return expect({ label, value });
+}
+
 function expectTagRender(params: Omit<TagSuggestionParams, 'matchLength'>) {
-  return expect(
-    new TagSuggestion({ ...params, matchLength: 0 })
-      .render()
-      .map(el => el.textContent)
-      .join(''),
-  );
+  const suggestion = new TagSuggestion({ ...params, matchLength: 0 });
+  const label = suggestion
+    .render()
+    .map(el => el.textContent)
+    .join('');
+  const value = suggestion.value();
+
+  return expect({ label, value });
 }

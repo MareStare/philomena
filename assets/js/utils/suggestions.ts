@@ -184,9 +184,12 @@ export class SuggestionsPopup {
       return;
     }
 
+    // This can't be triggered via the public API of this class
+    /* v8 ignore start */
     if (index < -1 || index >= this.items.length) {
       throw new Error(`setSelection(): invalid selection index: ${index}`);
     }
+    /* v8 ignore end */
 
     const selectedClass = 'autocomplete__item--selected';
 
