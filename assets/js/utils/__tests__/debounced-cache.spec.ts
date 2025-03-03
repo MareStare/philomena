@@ -76,7 +76,7 @@ describe('DebouncedCache', () => {
       expect(consoleSpy.debug.mock.calls).toMatchInlineSnapshot(`
         [
           [
-            "A call to was aborted after the debounce threshold was reached",
+            "A call was aborted after the debounce threshold was reached",
             DOMException {},
           ],
         ]
