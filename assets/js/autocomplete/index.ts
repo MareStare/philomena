@@ -150,7 +150,13 @@ class Autocomplete {
   scheduleServerSideSuggestions(this: ActiveAutocomplete, term: string, historySuggestions: HistorySuggestion[]) {
     const request: GetTagSuggestionsRequest = {
       term,
-      limit: this.input.maxSuggestions - historySuggestions.length,
+
+      // We always use the `maxSuggestions` value for the limit, because it's a
+      // reasonably small and limited value. Yes, we may overfetch in some cases,
+      // but otherwise the cache hits rate of `DebouncedCache` also increases.
+      // It would be rather dumb to send a request for 10 suggestions and then
+      // for 7 suggestions for the same term two times.
+      limit: this.input.maxSuggestions,
     };
 
     this.serverSideTagSuggestions.schedule(request, response => {
@@ -158,15 +164,20 @@ class Autocomplete {
         return;
       }
 
+      // Truncate the suggestions to the leftover space shared with history suggestions.
+      const maxTags = this.input.maxSuggestions - historySuggestions.length;
+
+      const tags = response.suggestions.slice(0, maxTags).map(
+        suggestion =>
+          new TagSuggestion({
+            ...suggestion,
+            matchLength: term.length,
+          }),
+      );
+
       this.showSuggestions({
         history: historySuggestions,
-        tags: response.suggestions.map(
-          suggestion =>
-            new TagSuggestion({
-              ...suggestion,
-              matchLength: term.length,
-            }),
-        ),
+        tags,
       });
     });
   }

@@ -10,17 +10,33 @@ it('requests server-side autocomplete if local autocomplete returns no results',
   ctx.expectUi().toMatchInlineSnapshot(`
     {
       "input": "mar<>",
-      "suggestions": [],
+      "suggestions": [
+        "marvelous → beautiful  30",
+        "mare  20",
+        "market  10",
+      ],
     }
   `);
 
-  await ctx.keyDown('ArrowDown');
-  await ctx.keyDown('Enter');
+  await ctx.setInput('');
+
+  // Make sure the response caching is insensitive to term case and leading whitespace.
+  // Trailing whitespace is still significant because terms may have internal spaces.
+  await ctx.setInput('mar');
+  await ctx.setInput(' mar');
+  await ctx.setInput(' Mar');
+  await ctx.setInput('  MAR');
 
   ctx.expectUi().toMatchInlineSnapshot(`
     {
-      "input": "mar<>",
-      "suggestions": [],
+      "input": "  MAR<>",
+      "suggestions": [
+        "marvelous → beautiful  30",
+        "mare  20",
+        "market  10",
+      ],
     }
   `);
+
+  expect(fetch).toHaveBeenCalledTimes(2);
 });

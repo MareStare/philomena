@@ -1,6 +1,6 @@
 import { makeEl } from './dom.ts';
 
-interface TagSuggestionsParams {
+export interface TagSuggestionParams {
   /**
    * If present, then this suggestion is for a tag alias.
    * If absent, then this suggestion is for the `canonical` tag name.
@@ -29,7 +29,7 @@ export class TagSuggestion {
   images: number;
   matchLength: number;
 
-  constructor(params: TagSuggestionsParams) {
+  constructor(params: TagSuggestionParams) {
     this.alias = params.alias;
     this.canonical = params.canonical;
     this.images = params.images;
@@ -66,7 +66,7 @@ export class TagSuggestion {
   static formatImageCount(count: number): string {
     const chars = [...count.toString()];
 
-    for (let i = chars.length - 3; i >= 0; i -= 3) {
+    for (let i = chars.length - 3; i > 0; i -= 3) {
       chars.splice(i, 0, ' ');
     }
 
@@ -239,8 +239,6 @@ export class SuggestionsPopup {
 
   private watchItem(item: SuggestionItem) {
     item.element.addEventListener('click', event => {
-      console.log('item_selected');
-
       const detail: ItemSelectedEvent = {
         suggestion: item.suggestion,
         shiftKey: event.shiftKey,

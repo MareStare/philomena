@@ -24,7 +24,7 @@ export class TestContext {
       }
 
       const url = new URL(request.url);
-      if (url.searchParams.get('query') !== 'mar') {
+      if (url.searchParams.get('term')?.toLowerCase() !== 'mar') {
         const suggestions: GetTagSuggestionsResponse = { suggestions: [] };
         return JSON.stringify(suggestions);
       }

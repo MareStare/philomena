@@ -50,8 +50,6 @@ export class DebouncedCache<Args extends unknown[], R> {
    * the abort signal will be triggered for the previous call.
    */
   schedule(...params: [...Args, onResult: (result: R) => void]): void {
-    this.abortLastSchedule(`[DebouncedCache] A new call to '${this.func.name}' was scheduled`);
-
     // There is no native support for destructuring after an ellipsis, so we have
     // to do some type casting work here.
     const onResult = params.pop() as (result: R) => void;
@@ -60,9 +58,11 @@ export class DebouncedCache<Args extends unknown[], R> {
     const key = JSON.stringify(args);
 
     if (this.cache.has(key)) {
-      this.onFulfilled(this.cache.get(key)!, onResult);
+      this.onFulfilled(key, this.cache.get(key)!, onResult);
       return;
     }
+
+    this.abortLastSchedule(`[DebouncedCache] A new call to '${this.func.name}' was scheduled`);
 
     const abortController = new AbortController();
 
@@ -74,7 +74,7 @@ export class DebouncedCache<Args extends unknown[], R> {
       // do the retries internally if necessary.
       this.cache.set(key, promise);
 
-      this.onFulfilled(promise, onResult);
+      this.onFulfilled(key, promise, onResult);
     };
 
     this.lastSchedule = {
@@ -83,17 +83,18 @@ export class DebouncedCache<Args extends unknown[], R> {
     };
   }
 
-  async onFulfilled(resultPromise: Promise<R>, onResult: (result: R) => void): Promise<void> {
+  async onFulfilled(key: string, resultPromise: Promise<R>, onResult: (result: R) => void): Promise<void> {
     let result;
     try {
       result = await resultPromise;
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        console.debug(`A call to '${this.func.name}' was aborted while it was in progress.`, error);
-        return;
+        console.debug(`A call to '${this.func.name}' was aborted while it was in progress.`, key, error);
+        this.cache.delete(key);
+      } else {
+        console.error(`An error occurred while calling '${this.func.name}'.`, key, error);
       }
-
-      throw error;
+      return;
     }
 
     onResult(result);
