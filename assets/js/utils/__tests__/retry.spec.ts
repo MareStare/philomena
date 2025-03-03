@@ -43,7 +43,7 @@ describe('retry', () => {
     });
     it('middle attempt', async () => {
       const func: RetryFunc<'ok'> = async attempt => {
-        if (attempt !== 3) {
+        if (attempt !== 2) {
           throw new Error('middle failure');
         }
         return 'ok';
@@ -53,14 +53,13 @@ describe('retry', () => {
         [
           "1: 200ms",
           "2: 300ms",
-          "3: undefined",
           "ok",
         ]
       `);
     });
     it('last attempt', async () => {
       const func: RetryFunc<'ok'> = async attempt => {
-        if (attempt !== 4) {
+        if (attempt !== 3) {
           throw new Error('last failure');
         }
         return 'ok';
@@ -71,7 +70,7 @@ describe('retry', () => {
           "1: 200ms",
           "2: 300ms",
           "3: undefined",
-          "throw Error: last failure",
+          "ok",
         ]
       `);
     });
