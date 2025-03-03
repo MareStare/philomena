@@ -51,7 +51,7 @@ export function listen() {
       return;
     }
 
-    histories.load(input.historyId).write(input.snapshot.normalizedValue);
+    histories.load(input.historyId).write(input.snapshot.trimmedValue);
   });
 }
 
@@ -65,8 +65,10 @@ export function listSuggestions(input: AutocompletableInput, limit?: number): Hi
     return [];
   }
 
+  const value = input.snapshot.trimmedValue.toLowerCase();
+
   return histories
     .load(input.historyId)
-    .listSuggestions(input.snapshot.normalizedValue, limit ?? input.maxSuggestions)
-    .map(content => new HistorySuggestion(content, input.snapshot.normalizedValue.length));
+    .listSuggestions(value, limit ?? input.maxSuggestions)
+    .map(content => new HistorySuggestion(content, value.length));
 }

@@ -44,7 +44,7 @@ export class InputHistory {
 
   /**
    * Save the input into the history and commit it to the `localStorage`.
-   * Expects a normalized input i.e. trimmed from whitespace and lowercased.
+   * Expects a value trimmed from whitespace by the caller.
    */
   write(input: string) {
     if (input === '') {

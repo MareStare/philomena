@@ -81,7 +81,7 @@ class Autocomplete {
     const historyConfig = readHistoryConfig();
 
     // Show all history suggestions if the input is empty.
-    if (historyConfig && input.snapshot.normalizedValue === '') {
+    if (historyConfig && input.snapshot.trimmedValue === '') {
       this.showSuggestions({
         history: history.listSuggestions(input),
         tags: [],

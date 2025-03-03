@@ -1,11 +1,12 @@
-import { listenAutocomplete } from '..';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fetchMock } from '../../../test/fetch-mock';
-import store from '../../utils/store';
+import { listenAutocomplete } from '..';
 import { fireEvent } from '@testing-library/dom';
 import { assertNotNull } from '../../utils/assert';
-import { TextInputElement } from 'autocomplete/input';
+import { TextInputElement } from '../input';
+import store from '../../utils/store';
+import { GetTagSuggestionsResponse } from 'autocomplete/client';
 
 export class TestContext {
   private input: TextInputElement;
@@ -17,17 +18,49 @@ export class TestContext {
 
     vi.useFakeTimers().setSystemTime(0);
     fetchMock.enableMocks();
-    fetchMock.mockResponse(this.fakeAutocompleteResponse);
+    fetchMock.mockResponse(request => {
+      if (request.url.includes('/autocomplete/compiled')) {
+        return this.fakeAutocompleteResponse;
+      }
+
+      const url = new URL(request.url);
+      if (url.searchParams.get('query') !== 'mar') {
+        const suggestions: GetTagSuggestionsResponse = { suggestions: [] };
+        return JSON.stringify(suggestions);
+      }
+
+      const suggestions: GetTagSuggestionsResponse = {
+        suggestions: [
+          {
+            alias: 'marvelous',
+            canonical: 'beautiful',
+            images: 30,
+          },
+          {
+            canonical: 'mare',
+            images: 20,
+          },
+          {
+            canonical: 'market',
+            images: 10,
+          },
+        ],
+      };
+
+      return JSON.stringify(suggestions);
+    });
 
     store.set('enable_search_ac', true);
 
     document.body.innerHTML = `
-      <input
-        class="test-input"
-        data-autocomplete="multi-tags"
-        data-autocomplete-condition="enable_search_ac"
-        data-autocomplete-history-id="search-history"
-      />
+      <form>
+        <input
+          class="test-input"
+          data-autocomplete="multi-tags"
+          data-autocomplete-condition="enable_search_ac"
+          data-autocomplete-history-id="search-history"
+        />
+      </form>
     `;
 
     listenAutocomplete();
@@ -36,6 +69,16 @@ export class TestContext {
     this.popup = assertNotNull(document.querySelector('.autocomplete'));
 
     expect(fetch).not.toBeCalled();
+  }
+
+  async submitForm(input?: string) {
+    if (input) {
+      await this.setInput(input);
+    }
+
+    this.input.form!.submit();
+
+    await this.setInput('');
   }
 
   async focusInput() {
@@ -135,10 +178,20 @@ export class TestContext {
     }
 
     const snapshot = [...popup.children].map(el => {
-      if (el.classList.contains('autocomplete__item--selected')) {
-        return `👉 ${el.textContent!.trim()}`;
+      if (el.tagName === 'HR') {
+        return '-----------';
       }
-      return el.textContent!.trim();
+
+      let content = el.textContent!.trim();
+
+      if (el.classList.contains('autocomplete__item__history')) {
+        content = `(history) ${content}`;
+      }
+
+      if (el.classList.contains('autocomplete__item--selected')) {
+        return `👉 ${content}`;
+      }
+      return content;
     });
 
     return snapshot;
@@ -163,7 +216,7 @@ export class TestContext {
   }
 }
 
-export async function init(): TestContext {
+export async function init(): Promise<TestContext> {
   const fakeAutocompleteBuffer = await fs.promises
     .readFile(path.join(__dirname, '../../utils/__tests__/autocomplete-compiled-v2.bin'))
     .then(({ buffer }) => new Response(buffer));
@@ -172,6 +225,7 @@ export async function init(): TestContext {
 
   expect(fetch).not.toHaveBeenCalled();
 
+  // Initialize the lazy autocomplete index cache
   await ctx.focusInput();
 
   ctx.expectRequests().toMatchInlineSnapshot(`
