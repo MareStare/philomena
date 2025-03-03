@@ -69,10 +69,29 @@ defmodule PhilomenaWeb.ContentSecurityPolicyPlug do
   # Use the "current host" in vite HMR mode for whatever the "current host" is.
   # Usually it's `localhost`, but it may be some other private IP address, that
   # you use to test the frontend on a mobile device connected via a local Wi-Fi.
-  defp default_script_src(host), do: vite_hmr?(do: "'self' #{host}:5173", else: "'self'")
+  defp default_script_src(host) do
+    # Workaround for a compile warning where `host` variable is unused if we
+    # inline the if branches into the `vite_hmr?` macro.
+    is_vite_hmr = vite_hmr?(do: true, else: false)
 
-  defp default_connect_src(host),
-    do: vite_hmr?(do: "'self' #{host}:5173 ws://#{host}:5173", else: "'self'")
+    if is_vite_hmr do
+      "'self' #{host}:5173"
+    else
+      "'self'"
+    end
+  end
+
+  defp default_connect_src(host) do
+    # Same workaround as in `default_script_src/1`
+    is_vite_hmr = vite_hmr?(do: true, else: false)
+
+    if is_vite_hmr do
+      "'self' #{host}:5173 ws://#{host}:5173"
+    else
+      "'self'"
+    end
+
+  end
 
   defp default_style_src, do: vite_hmr?(do: "'self' 'unsafe-inline'", else: "'self'")
 
