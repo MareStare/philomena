@@ -169,8 +169,6 @@ export class TestContext {
   }
 
   suggestionsSnapshot() {
-    console.log('expecting suggestions');
-
     const { popup } = this;
 
     if (popup.classList.contains('hidden')) {

@@ -61,10 +61,8 @@ class Autocomplete {
     }
   }
 
-  refresh(event?: Event) {
+  refresh() {
     this.serverSideTagSuggestions.abortLastSchedule('[Autocomplete] A new user input was received');
-
-    console.debug('refresh', event);
 
     this.input = AutocompletableInput.fromElement(document.activeElement);
     if (!this.isActive()) {
@@ -186,9 +184,7 @@ class Autocomplete {
     this.popup.setSuggestions(suggestions).showForElement(this.input.element);
   }
 
-  onFocusIn(event: FocusEvent) {
-    console.debug('focusin', event);
-
+  onFocusIn() {
     // The event we are processing comes before the input's selection is settled.
     // Defer the refresh to the next frame to get the updated selection.
     requestAnimationFrame(() => {
@@ -199,7 +195,6 @@ class Autocomplete {
   }
 
   onClick(event: MouseEvent) {
-    console.debug('click', event);
     if (this.input?.isEnabled() && this.input.element !== event.target) {
       // We lost focus. Hide the popup.
       // We use this method instead of the `focusout` event because this way it's
@@ -211,8 +206,6 @@ class Autocomplete {
   }
 
   onKeyDown(event: KeyboardEvent) {
-    console.log(`keydown! key: '${event.key}', code: '${event.code}', keyCode: ${event.keyCode}`);
-
     if (!this.isActive() || this.input.element !== event.target) {
       return;
     }
@@ -288,8 +281,6 @@ class Autocomplete {
   }
 
   confirmSuggestion({ suggestion, shiftKey, ctrlKey }: ItemSelectedEvent) {
-    console.log('confirmSuggestion', suggestion);
-
     this.assertActive();
 
     this.updateInputWithSelectedValue(suggestion);

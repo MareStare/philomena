@@ -1,4 +1,3 @@
-import { waitFor } from '@testing-library/dom';
 import { init } from './context';
 
 it('supports navigation via keyboard', async () => {
