@@ -49,6 +49,7 @@ describe('Suggestions', () => {
 
     if (popup) {
       popup.hide();
+      popup.setSuggestions({ history: [], tags: [] });
       popup = undefined;
     }
   });
