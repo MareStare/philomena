@@ -185,12 +185,24 @@ class Autocomplete {
   }
 
   onFocusIn() {
-    // The event we are processing comes before the input's selection is settled.
+    // The purpose of `focusin` subscription is to bring up the popup with the
+    // initial history suggestions if there is no popup yet. If there is a popup
+    // already, e.g. when we are re-focusing back to the input after the user
+    // selected some suggestion then there is no need to refresh the popup.
+    if (!this.popup.isHidden) {
+      return;
+    }
+
+    // The event we are processing comes before the input's selection is updated.
     // Defer the refresh to the next frame to get the updated selection.
     requestAnimationFrame(() => {
-      if (this.popup.isHidden) {
-        this.refresh();
+      // Double-check the popup is still hidden on a new spin of the event loop.
+      // Just in case =)
+      if (!this.popup.isHidden) {
+        return;
       }
+
+      this.refresh();
     });
   }
 
