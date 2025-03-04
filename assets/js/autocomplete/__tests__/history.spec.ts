@@ -27,19 +27,20 @@ it('records search history', async () => {
     }
   `);
 
-  await ctx.submitForm('a complex OR query AND bar');
+  await ctx.submitForm('a complex OR (query AND bar)');
 
   ctx.expectUi().toMatchInlineSnapshot(`
     {
       "input": "",
       "suggestions": [
-        "(history) a complex OR query AND bar",
+        "(history) a complex OR (query AND bar)",
         "(history) foo2",
         "(history) foo1",
       ],
     }
   `);
 
+  // Last recently used item should be on top
   await ctx.submitForm('foo2');
 
   ctx.expectUi().toMatchInlineSnapshot(`
@@ -47,7 +48,7 @@ it('records search history', async () => {
       "input": "",
       "suggestions": [
         "(history) foo2",
-        "(history) a complex OR query AND bar",
+        "(history) a complex OR (query AND bar)",
         "(history) foo1",
       ],
     }
@@ -59,7 +60,7 @@ it('records search history', async () => {
     {
       "input": "a com<>",
       "suggestions": [
-        "(history) a complex OR query AND bar",
+        "(history) a complex OR (query AND bar)",
       ],
     }
   `);
@@ -71,6 +72,24 @@ it('records search history', async () => {
       "input": "f<>",
       "suggestions": [
         "(history) foo2",
+        "(history) foo1",
+        "-----------",
+        "forest  3",
+        "fog  1",
+        "force field  1",
+        "flower  1",
+      ],
+    }
+  `);
+
+  // History items must be selectable
+  await ctx.keyDown('ArrowDown');
+
+  ctx.expectUi().toMatchInlineSnapshot(`
+    {
+      "input": "foo2<>",
+      "suggestions": [
+        "👉 (history) foo2",
         "(history) foo1",
         "-----------",
         "forest  3",

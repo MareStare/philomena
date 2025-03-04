@@ -14,6 +14,9 @@ import { AutocompleteClient, GetTagSuggestionsRequest } from './client';
 import { DebouncedCache } from '../utils/debounced-cache';
 import store from '../utils/store';
 
+// This lint is dumb, especially in this case because this type alias depends on
+// the `Autocomplete` symbol, and methods on the `Autocomplete` class depend on
+// this type alias, so either way there is a circular dependency in type annotations
 // eslint-disable-next-line no-use-before-define
 type ActiveAutocomplete = Autocomplete & { input: AutocompletableInput };
 
@@ -28,11 +31,10 @@ function readHistoryConfig() {
 }
 
 class Autocomplete {
-  index: 'fetching' | 'unavailable' | LocalAutocompleter | null = null;
+  index: null | 'fetching' | 'unavailable' | LocalAutocompleter = null;
   input: AutocompletableInput | null = null;
   popup = new SuggestionsPopup();
   client = new AutocompleteClient();
-
   serverSideTagSuggestions = new DebouncedCache(this.client.getTagSuggestions.bind(this.client));
 
   constructor() {
@@ -44,13 +46,14 @@ class Autocomplete {
    */
   async fetchLocalAutocomplete() {
     if (this.index) {
-      // The index is already either fetching or initialized, so nothing to do.
+      // The index is already either fetching or initialized/unavailable, so nothing to do.
       return;
     }
 
     // Indicate that the index is in the process of fetching so that
     // we don't try to fetch it again while it's still loading.
     this.index = 'fetching';
+
     try {
       const index = await this.client.getCompiledAutocomplete();
       this.index = new LocalAutocompleter(index);
@@ -66,14 +69,13 @@ class Autocomplete {
 
     this.input = AutocompletableInput.fromElement(document.activeElement);
     if (!this.isActive()) {
-      // If the input is not enabled, we don't need to show the popup.
       this.popup.hide();
       return;
     }
 
     const { input } = this;
 
-    // Initiate the lazy local autocomplete fetch if it hasn't been done yet.
+    // Initiate the lazy local autocomplete fetch on background if it hasn't been done yet.
     this.fetchLocalAutocomplete();
 
     const historyConfig = readHistoryConfig();
@@ -94,7 +96,8 @@ class Autocomplete {
       tags: [],
     };
 
-    // There may be several scenarios here:
+    // There are several scenarios where we don't try to fetch server-side suggestions,
+    // even if we could.
     //
     // 1. The `index` is still `fetching`.
     //    We should wait until it's done. Doing concurrent server-side suggestions
@@ -104,8 +107,6 @@ class Autocomplete {
     //    We shouldn't fetch server suggestions either because there may be something
     //    horribly wrong on the backend, so we don't want to spam it with even more
     //    requests. This scenario should be extremely rare though.
-    //
-    // 3. The `index` was loaded (Flutter-Yay 🎉).
     if (
       !input.snapshot.activeTerm ||
       !(this.index instanceof LocalAutocompleter) ||
@@ -137,7 +138,7 @@ class Autocomplete {
     this.showSuggestions(suggestions);
 
     // Only if the index had its chance to provide suggestions
-    // and produced nothing, do we try to fetch server suggestions.
+    // and produced nothing, do we try to fetch server-side suggestions.
     if (suggestions.tags.length > 0 || activeTerm.length < 3) {
       return;
     }
@@ -151,9 +152,8 @@ class Autocomplete {
 
       // We always use the `maxSuggestions` value for the limit, because it's a
       // reasonably small and limited value. Yes, we may overfetch in some cases,
-      // but otherwise the cache hits rate of `DebouncedCache` also increases.
-      // It would be rather dumb to send a request for 10 suggestions and then
-      // for 7 suggestions for the same term two times.
+      // but otherwise the cache hits rate of `DebouncedCache` also increases due
+      // to the less variation in the cache key (request params).
       limit: this.input.maxSuggestions,
     };
 
@@ -230,19 +230,21 @@ class Autocomplete {
     switch (event.code) {
       case 'Enter': {
         const { selectedSuggestion } = this.popup;
-        if (selectedSuggestion) {
-          // Prevent submission of the form when Enter was hit.
-          // Note, however, that `confirmSuggestion` may still submit the form
-          // manually if the selected suggestion is a history suggestion and
-          // no `Shift` key was pressed.
-          event.preventDefault();
-
-          this.confirmSuggestion({
-            suggestion: selectedSuggestion,
-            shiftKey: event.shiftKey,
-            ctrlKey: event.ctrlKey,
-          });
+        if (!selectedSuggestion) {
+          return;
         }
+
+        // Prevent submission of the form when Enter was hit.
+        // Note, however, that `confirmSuggestion` may still submit the form
+        // manually if the selected suggestion is a history suggestion and
+        // no `Shift` key was pressed.
+        event.preventDefault();
+
+        this.confirmSuggestion({
+          suggestion: selectedSuggestion,
+          shiftKey: event.shiftKey,
+          ctrlKey: event.ctrlKey,
+        });
         return;
       }
       case 'Escape': {
@@ -251,7 +253,7 @@ class Autocomplete {
       }
       case 'ArrowLeft':
       case 'ArrowRight': {
-        // The event we are processing comes before the input's selection changes.
+        // The event we are processing comes before the input's selection is updated.
         // Defer the refresh to the next frame to get the updated selection.
         requestAnimationFrame(() => this.refresh());
         return;
@@ -275,11 +277,7 @@ class Autocomplete {
         if (this.popup.selectedSuggestion) {
           this.updateInputWithSelectedValue(this.popup.selectedSuggestion);
         } else {
-          // Restore the original input state
-          const { element, snapshot } = this.input;
-          const { selection } = snapshot;
-          element.value = snapshot.origValue;
-          element.setSelectionRange(selection.start, selection.end, selection.direction ?? undefined);
+          this.updateInputWithOriginalValue();
         }
 
         // Prevent the cursor from moving to the start or end of the input field,
@@ -290,6 +288,13 @@ class Autocomplete {
       }
       default:
     }
+  }
+
+  updateInputWithOriginalValue(this: ActiveAutocomplete) {
+    const { element, snapshot } = this.input;
+    const { selection } = snapshot;
+    element.value = snapshot.origValue;
+    element.setSelectionRange(selection.start, selection.end, selection.direction ?? undefined);
   }
 
   confirmSuggestion({ suggestion, shiftKey, ctrlKey }: ItemSelectedEvent) {
@@ -321,7 +326,7 @@ class Autocomplete {
     this.popup.hide();
   }
 
-  updateInputWithSelectedValue(this: Autocomplete & { input: AutocompletableInput }, suggestion: Suggestion) {
+  updateInputWithSelectedValue(this: ActiveAutocomplete, suggestion: Suggestion) {
     const {
       element,
       snapshot: { activeTerm, origValue },
@@ -352,7 +357,7 @@ class Autocomplete {
     }
 
     console.debug('Current input when the error happened', this.input);
-    throw new Error(`Expected active autocomplete, but it isn't`);
+    throw new Error(`BUG: expected autocomplete to be active, but it isn't`);
   }
 }
 
@@ -382,6 +387,7 @@ export function listenAutocomplete() {
 
   const autocomplete = new Autocomplete();
 
+  // Refresh all the state in case any autocomplete settings change.
   store.watchAll(key => {
     if (key && key !== 'enable_search_ac' && !key.startsWith('autocomplete')) {
       return;

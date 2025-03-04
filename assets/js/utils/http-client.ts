@@ -76,7 +76,7 @@ function isRetryable(error: Error): boolean {
 }
 
 /**
- * Generates a base32 ID with the given prefix as the request ID discriminator.
+ * Generates a base32 ID with the given prefix as the ID discriminator.
  * The prefix is useful when reading or grepping thru logs to identify the type
  * of the ID (i.e. it's visually clear that strings that start with `req-` are
  * request IDs).

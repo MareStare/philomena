@@ -39,6 +39,7 @@ function hideIf(element: HTMLElement, condition: boolean) {
 function setupAutocompleteSettings() {
   const autocompleteSettings = assertNotNull($<HTMLElement>('.autocomplete-settings'));
 
+  // Don't show search history settings if autocomplete is entirely disabled.
   assertNotNull($('#user_enable_search_ac')).addEventListener('change', event => {
     hideIf(autocompleteSettings, !(event.target as HTMLInputElement).checked);
   });
@@ -53,16 +54,14 @@ function setupAutocompleteSettings() {
 export function setupSettings() {
   if (!$('#js-setting-table')) return;
 
-  const localCheckboxes = $$<HTMLInputElement>('[data-tab="local"] input');
-
   // Local settings
-  localCheckboxes.forEach(input => {
+  for (const input of $$<HTMLInputElement>('[data-tab="local"] input')) {
     input.addEventListener('change', () => {
       const newValue = input.type === 'checkbox' ? input.checked : input.value;
 
       store.set(input.id.replace('user_', ''), newValue);
     });
-  });
+  }
 
   setupThemeSettings();
   setupAutocompleteSettings();

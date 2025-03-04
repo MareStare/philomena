@@ -292,6 +292,7 @@ export default tsEslint.config(
       'vitest/expect-expect': [
         'error',
         {
+          // Custom `expectStuff()` functions must also count as assertions.
           assertFunctionNames: ['expect*', '*.expect*'],
         },
       ],

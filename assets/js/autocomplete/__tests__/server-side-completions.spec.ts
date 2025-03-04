@@ -5,6 +5,8 @@ it('requests server-side autocomplete if local autocomplete returns no results',
 
   await ctx.setInput('mar');
 
+  // 1. Request the local autocomplete index.
+  // 2. Request the server-side suggestions.
   expect(fetch).toHaveBeenCalledTimes(2);
 
   ctx.expectUi().toMatchInlineSnapshot(`
@@ -21,7 +23,6 @@ it('requests server-side autocomplete if local autocomplete returns no results',
   await ctx.setInput('');
 
   // Make sure the response caching is insensitive to term case and leading whitespace.
-  // Trailing whitespace is still significant because terms may have internal spaces.
   await ctx.setInput('mar');
   await ctx.setInput(' mar');
   await ctx.setInput(' Mar');
@@ -39,4 +40,9 @@ it('requests server-side autocomplete if local autocomplete returns no results',
   `);
 
   expect(fetch).toHaveBeenCalledTimes(2);
+
+  // Trailing whitespace is still significant because terms may have internal spaces.
+  await ctx.setInput('mar ');
+
+  expect(fetch).toHaveBeenCalledTimes(3);
 });

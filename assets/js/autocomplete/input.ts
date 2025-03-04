@@ -5,7 +5,7 @@ import { Range } from '../query/lex';
 export type TextInputElement = HTMLInputElement | HTMLTextAreaElement;
 
 /**
- * Describes the term, that the the cursor is currently on, which is known as "active".
+ * Describes the term, that the cursor is currently on, which is known as "active".
  * If any tag completion is accepted, this term will be overwritten in the input.
  * The rest of the input will be left untouched.
  */
@@ -58,10 +58,10 @@ interface AutocompleteInputSnapshot {
 /**
  * The `multi-tags` autocompletion type is used to power inputs with complex
  * search queries like `(tag1 OR tag2), tag3` and tag lists like `tag1, tag2, tag3`
- * in the plain tag editor.
+ * in the plain tag search/edit inputs.
  *
  * The `single-tag` autocompletion type is used to power the fancy tag editor
- * that manages serparate input elements for every tag. In this mode the user
+ * that manages separate input elements for every tag. In this mode the user
  * can input `-tag` prefix to remove the tag from the list. See more details
  * about how it works here: https://github.com/philomena-dev/philomena/pull/383
  */
@@ -129,7 +129,7 @@ export class AutocompletableInput {
     const type = element.dataset.autocomplete;
 
     if (type !== 'multi-tags' && type !== 'single-tag') {
-      throw new Error(`Invalid autocomplete type: ${type}`);
+      throw new Error(`BUG: invalid autocomplete type: ${type}`);
     }
 
     this.type = type;

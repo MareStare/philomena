@@ -13,7 +13,7 @@ interface History {
   schemaVersion: 1;
 
   /**
-   * The list of history records sorted from the most recently used to the oldest unused.
+   * The list of history records sorted from the last recently used to the oldest unused.
    */
   records: string[];
 }
@@ -50,7 +50,10 @@ export class HistoryStore {
     store.set(this.key, history);
 
     const end = performance.now();
-    console.debug(`Writing ${records.length} history records to the localStorage took ${end - start}ms.`);
+    console.debug(
+      `Writing ${records.length} history records to the localStorage took ${end - start}ms. ` +
+        `Records: ${records.length}`,
+    );
   }
 
   /**
@@ -74,13 +77,13 @@ export class HistoryStore {
       default:
         // It's very unlikely that we ever hit this branch.
         console.warn(
-          `Unknown search history schema version: '${history.schemaVersion}', while ` +
-            `this frontend code was built with the maximum supported schema version ` +
+          `Unknown search history schema version: '${history.schemaVersion}'. ` +
+            `This frontend code was built with the maximum supported schema version ` +
             `'${latestSchemaVersion}'. The search history will be disabled for this ` +
             `session to prevent potential history data loss. The cause of the version ` +
             `mismatch may be that a newer version of the frontend code is running in a ` +
-            `separate tab, or git commits supporting the newer schema version were ` +
-            `mistakenly reverted in the source repository.`,
+            `separate tab, or you were mistakenly served with an older version of the ` +
+            `frontend code.`,
         );
 
         // Disallow writing to the storage to prevent data loss.

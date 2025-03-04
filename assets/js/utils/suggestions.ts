@@ -187,7 +187,7 @@ export class SuggestionsPopup {
     // This can't be triggered via the public API of this class
     /* v8 ignore start */
     if (index < -1 || index >= this.items.length) {
-      throw new Error(`setSelection(): invalid selection index: ${index}`);
+      throw new Error(`BUG: setSelection(): invalid selection index: ${index}`);
     }
     /* v8 ignore end */
 

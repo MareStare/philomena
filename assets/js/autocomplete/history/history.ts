@@ -14,7 +14,7 @@ const maxInputLength = 256;
 
 /**
  * Input history is a mini DB limited in size and stored in the `localStorage`.
- * It provides a simple CRUD/watch API for the search history data.
+ * It provides a simple CRUD API for the search history data.
  *
  * Note that `localStorage` is not transactional. Other browser tabs may modify
  * it concurrently, which may lead to version mismatches and potential TOCTOU
@@ -22,13 +22,13 @@ const maxInputLength = 256;
  * concurrent usage patterns is almost 0. The worst thing that can happen in
  * such a rare scenario is that a search query may not be saved to the storage
  * or the search history may be temporarily disabled for the current session
- * until the page is reloaded or a newer version of the frontend code is loaded.
+ * until the page is reloaded with a newer version of the frontend code.
  */
 export class InputHistory {
   private readonly store: HistoryStore;
 
   /**
-   * The list of history records sorted from the most recently used to the oldest unused.
+   * The list of history records sorted from the last recently used to the oldest unused.
    */
   private records: string[];
 
@@ -53,6 +53,7 @@ export class InputHistory {
 
     if (input.length > maxInputLength) {
       console.warn(`The input is too long to be saved in the search history (length: ${input.length}).`);
+      return;
     }
 
     const index = this.records.findIndex(historyRecord => historyRecord === input);
@@ -60,11 +61,11 @@ export class InputHistory {
     if (index >= 0) {
       this.records.splice(index, 1);
     } else if (this.records.length >= maxRecords) {
-      // Bye-bye, least popular record! 👋 Nopony will miss you 🔪🩸
+      // Bye-bye, the oldest unused record! 👋 Nopony will miss you 🔪🩸
       this.records.pop();
     }
 
-    // Put the record on the top of the list as the most recently used.
+    // Put the record on the top of the list as the last recently used.
     this.records.unshift(input);
 
     this.store.write(this.records);

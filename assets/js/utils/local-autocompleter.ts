@@ -3,8 +3,20 @@ import { UniqueHeap } from './unique-heap';
 import store from './store';
 
 export interface Result {
-  alias?: string;
+  /**
+   * If present, then this suggestion is for a tag alias.
+   * If absent, then this suggestion is for the `canonical` tag name.
+   */
+  alias?: null | string;
+
+  /**
+   * The canonical name of the tag (non-alias).
+   */
   canonical: string;
+
+  /**
+   * Number of images tagged with this tag.
+   */
   images: number;
 }
 

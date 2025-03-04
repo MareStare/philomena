@@ -92,6 +92,17 @@ it('supports navigation via keyboard', async () => {
     }
   `);
 
+  await ctx.keyDown('Escape');
+
+  ctx.expectUi().toMatchInlineSnapshot(`
+    {
+      "input": "forest, artist:test<>, safe",
+      "suggestions": [],
+    }
+  `);
+
+  await ctx.setInput('forest, t<>, safe');
+  await ctx.keyDown('ArrowDown');
   await ctx.keyDown('Enter');
 
   ctx.expectUi().toMatchInlineSnapshot(`

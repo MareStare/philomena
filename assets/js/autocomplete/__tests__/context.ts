@@ -8,6 +8,24 @@ import { TextInputElement } from '../input';
 import store from '../../utils/store';
 import { GetTagSuggestionsResponse } from 'autocomplete/client';
 
+/**
+ * A reusable test environment for autocompletion tests. Note that it does no
+ * attempt to provide environment cleanup functionality. Yes, if you use this
+ * in several tests in one file, then tests will conflict with each other.
+ *
+ * The main problem of implementing the cleanup here is that autocomplete code
+ * adds event listeners to the `document` object. Some of them could be moved
+ * to the `<body>` element, but events such as `'storage'` are only available
+ * on the document object.
+ *
+ * Unfortunately, there isn't a good easy way to reload the DOM completely in
+ * `jsdom`, so it's expected that you define a single test per file so that
+ * `vitest` runs every test in an isolated process, where no cleanup is needed.
+ *
+ * I wish `vitest` actually did that by default, because cleanup logic and test
+ * in-process test isolation is just boilerplate that we could avoid at this
+ * scale at least.
+ */
 export class TestContext {
   private input: TextInputElement;
   private popup: HTMLElement;
@@ -18,6 +36,8 @@ export class TestContext {
 
     vi.useFakeTimers().setSystemTime(0);
     fetchMock.enableMocks();
+
+    // Our mock backend implementation.
     fetchMock.mockResponse(request => {
       if (request.url.includes('/autocomplete/compiled')) {
         return this.fakeAutocompleteResponse;
@@ -86,6 +106,13 @@ export class TestContext {
     await vi.runAllTimersAsync();
   }
 
+  /**
+   * Sets the input to `value`. Allows for a special `<>` syntax. These characters
+   * are removed from the input. Their position is used to set the selection.
+   *
+   * - `<` denotes the `selectionStart`
+   * - `>` denotes the `selectionEnd`.
+   */
   async setInput(value: string) {
     if (document.activeElement !== this.input) {
       await this.focusInput();
@@ -127,8 +154,6 @@ export class TestContext {
       const meta: Record<string, unknown> = {};
 
       const url = new URL(request.url);
-      url.host = 'host.com';
-      url.port = '';
 
       const methodAndUrl = `${request.method} ${url}`;
 
@@ -153,19 +178,16 @@ export class TestContext {
     return expect(snapshot);
   }
 
+  /**
+   * The snapshot of the UI uses some special syntax like `<>` to denote the
+   * selection start (`<`) and end (`>`), as well as some markers for the
+   * currently selected item and history suggestions.
+   */
   expectUi() {
     const input = this.inputSnapshot();
     const suggestions = this.suggestionsSnapshot();
 
     return expect({ input, suggestions });
-  }
-
-  expectInput() {
-    return expect(this.inputSnapshot());
-  }
-
-  expectSuggestions() {
-    return expect(this.suggestionsSnapshot());
   }
 
   suggestionsSnapshot() {
@@ -175,7 +197,7 @@ export class TestContext {
       return [];
     }
 
-    const snapshot = [...popup.children].map(el => {
+    return [...popup.children].map(el => {
       if (el.tagName === 'HR') {
         return '-----------';
       }
@@ -191,8 +213,6 @@ export class TestContext {
       }
       return content;
     });
-
-    return snapshot;
   }
 
   inputSnapshot() {
@@ -227,16 +247,16 @@ export async function init(): Promise<TestContext> {
   await ctx.focusInput();
 
   ctx.expectRequests().toMatchInlineSnapshot(`
-      [
-        {
-          "dest": "GET http://host.com/autocomplete/compiled?vsn=2&key=1970-0-1",
-          "meta": {
-            "cache": "force-cache",
-            "credentials": "omit",
-          },
+    [
+      {
+        "dest": "GET http://localhost:3000/autocomplete/compiled?vsn=2&key=1970-0-1",
+        "meta": {
+          "cache": "force-cache",
+          "credentials": "omit",
         },
-      ]
-    `);
+      },
+    ]
+  `);
 
   ctx.expectUi().toMatchInlineSnapshot(`
     {
